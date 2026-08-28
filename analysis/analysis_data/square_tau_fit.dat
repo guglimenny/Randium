@@ -1,0 +1,6 @@
+# Square lattice - Fit result for relaxation time vs inverse temperature beta (high-beta regime).
+# Function used: tau_q * exp(J**2(beta - beta_q))
+# J | std_J | beta_q | std_beta_q | tau_q | std_tau_q
+3.624965893720425214e+00 4.669356553497317625e-02
+6.949074353253998915e-01 1.461009307631154150e-02
+4.958564416584088086e+00 4.046130743480009229e-01

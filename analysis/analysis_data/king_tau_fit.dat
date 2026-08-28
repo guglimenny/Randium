@@ -1,0 +1,6 @@
+# King lattice - Fit result for relaxation time vs inverse temperature beta (high-beta regime).
+# Function used: tau_q * exp(J**2(beta - beta_q))
+# J | std_J | beta_q | std_beta_q | tau_q | std_tau_q
+5.923104520046112320e+00 9.115729612110440305e-02
+8.186126206050300391e-01 8.932719419391938268e-03
+8.079305303920451209e+00 6.217991017351802707e-01

@@ -1,0 +1,6 @@
+# Hexagonal lattice - Fit result for relaxation time vs inverse temperature beta (high-beta regime).
+# Function used: tau_q * exp(J**2(beta - beta_q))
+# J | std_J | beta_q | std_beta_q | tau_q | std_tau_q
+2.875164869275273372e+00 3.799183434312073532e-02
+6.442672532867553814e-01 1.986373500116445090e-02
+2.560707124369958176e+00 2.851903115498728436e-01

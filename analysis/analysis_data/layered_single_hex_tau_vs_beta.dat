@@ -1,0 +1,5 @@
+# Layered Single-Link Hex lattice - Relaxation time tau vs inverse temperature beta. Note: include cases where tau is not found.
+# beta | tau
+1.000000000000000000e+00 1.900000000000000000e+01
+1.100000000000000089e+00 5.500000000000000000e+01
+1.399999999999999911e+00 4.014000000000000000e+03

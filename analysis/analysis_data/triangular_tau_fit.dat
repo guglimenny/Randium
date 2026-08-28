@@ -1,0 +1,6 @@
+# Triangular lattice - Fit result for relaxation time vs inverse temperature beta (high-beta regime).
+# Function used: tau_q * exp(J**2(beta - beta_q))
+# J | std_J | beta_q | std_beta_q | tau_q | std_tau_q
+4.580937855817088789e+00 5.129064951016490403e-02
+7.893470909792252854e-01 8.668881938973164655e-03
+5.165511906917553908e+00 3.082968537860458214e-01
