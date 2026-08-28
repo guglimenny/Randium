@@ -1,0 +1,105 @@
+[13/08/26 - 11:00] Polishing should be done!
+
+Small notebook of my work on the Randium code (randium_original) 'polish', 
+i.e. modifications done in order to:
+- remove legacy code;
+- reorder functions;
+- introduce neighbours list.
+
+GENERAL NOTES :
+- [✔️] Need to put number of types (M or num_types) equal to number of sites.
+
+MODIFICATION HISTORY:
+
+1. [backend] removed get_pair_energy_v2.
+
+2. [backend] removed c_* (cache) functions:
+    - c_get_pair_energy;
+    - c_get_particle_energy;
+    - c_global_mc;
+    - [randium_2d_gpu] (commented) run_global_cache;
+
+3. [ongoing] [backend] removed num_types input arg from get_pair_energy_v1.
+    This is propagated to:
+    - get_pair_energy [x];
+    - h_get_pair_energy [x]:
+
+    - h_get_particle_energy [x], h_get_lattice_energy [x];
+    * h_lattice_energy [x], h_global_mc [x], run_cpu [x];
+    * main [x];
+    * [randium_2d_gpu] get_interaction_matrix [x], energy [x], run_global [x], 
+      run_cpu [x];
+
+    - d_get_pair_energy [x]:
+    * d_get_particle_energy [x];
+    * d_update [x], d_update_particle_type_swap [x];
+    * kernel_run_simulation [x], kernel_run_type_swaps [x];
+    * [randium_2d_gpu] run [x], run_type_swaps [x].
+
+4. Changed from fixed simulation params (beta, sim_max_time, num_runs) to 
+    input provided params + now user gives times in terms of power of 10.
+    E.g., python3 run.py 1.0 4 1 --> sim_max_time = 10**4
+
+========== All and the above is my 'v2' ==========
+
+5. [backend] Reordered functions in order to group host ('h_*') and 
+    device ('d_*') functions together.
+
+6. Implemented global variable for neighbours list/lattice geometry:
+    - SQUARE_NEIGHBOR_LIST is a global constants with the 'right'
+        direction of neighbours.
+    - neighbor_list is the actual list used in the code (to be selected)
+        among the gloabl constants above.
+    - z is the coordination number of the lattice.
+
+7. [backend] Removed h_global_mc. This was propagated to:
+    - [randium_2d_gpu] run_global.
+
+8. [backend] Removed h_get_lattice_energy and moved 
+    h_lattice_energy --> h_get_lattice_energy.
+
+9. [randium_2d_gpu] Removed default value for beta from run() and 
+    run_cpu().
+
+========== All and the above is my 'v3' ==========
+
+10. Multiple modification to [backend] run_cpu():
+    - now site positions are x0, y0 (previously i, j) and x1,y1 (ni, nj);
+    - random neighbour is selected by extracting a random int in [0,z-1] 
+        and selecting the neighbor from neighbor_list;
+
+11. Set number of types (num_types or self.M or M) equal to number
+    of sites:
+    - [backend] main(): set num_of_each_type=1, hence now num_types=N;
+    - [randium_2d_gpu] __init__(): set defaul value num_of_each_type=1;
+    - [//] __init__(): removed self.N_m - had the same function of self.num_of_each_type.
+        This was propagated to:
+        * [//] run_type_swaps(): removed self.N_m - not used;
+        * [//] meta_info_simple(), meta_info(): moved self.N_m --> self.num_of_each_type.
+    - [//] __init__(): removed self.M - self.num_types is the same thing.
+        This was propagated to:
+        * [//] meta_info_simple(), meta_info(): moved self.M --> self.num_types.
+
+12. [randium_2d_gpu] run_type_swaps(): removed self.num_types, self.N_M naming - it is
+    already done in __init__().
+
+13. [backend] removed import functools - not used;
+    [randium_2d_gpu] removed import math - // //.
+
+14. [randium_2d_gpu] __init__(): added coordination number self.z (imported from [backend]).
+    [run] Generalised equilibration criterio to: 2/z * u * beta < 0.99. Note that 2/z is 
+    computed a priori as 'energy_coeff_inv'. Similarly, implemented beta_inv = 1. / beta to
+    avoid division in the equilibration loop.
+
+========== All and the above is my 'v4' ==========
+
+DO TO:
+- [run] change energy equilibration criterion to - 2/z * u < beta
+- [✔️][backend] run_type_swaps(): remove self.N_M definition - its already in
+    __init__();
+
+QUESTIONS:
+- [✔️][backend] h_global_mc: is it necessary? Legacy
+- [backend] run_cpu: do we want to select neighbours like this? Remove
+- [✔️][backend] h_lattice_energy, h_get_lattice_energy do the same thing?
+- [to look at] originally number of types in defined in 2 different ways?

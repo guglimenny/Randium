@@ -1,0 +1,84 @@
+RANDIUM 3D BENCHMARK:
+
+TODO:
+1. move neighbour list dtype to np.int16
+
+MODIFICATION HISTORY:
+1. [backend] added hexagonal_single_interlayer lattice type
+    and its neighbour list;
+    
+2. [randium_3d_gpu] added self.lattice_type to add to 
+    meta_info_simple() and meta_info();
+
+3. [run] Changed run gpu params to
+    
+    threads_per_block=(4, 4, 4), 
+    blocks=(3, 3, 3)
+
+    based on benchmarks.
+
+4. [randium_3d_gpu] Same as 3;
+
+GPU PARAMS OPTIMISATION:
+- Objective: find most efficient combination of gpu-params threads_per_block 
+    and blocks while keeping the linear size = 64.
+
+- Tried:
+    homogeneous | threads | blocks | tiles | result | time (min) | mc attempts per s (mil) 
+    --------------------------------------------------------------------------------------
+    yes         | 1       | 16     | 4     | err1   | x          | x
+    yes         | 2       | 8      | 4     | done   | 20         | 135
+    yes         | 4       | 4      | 4     | warn1  | 42         | 115
+    yes         | 8       | 2      | 4     | warn1  | 40         | 39
+    yes         | 1       | 16     | 4     | err2   | x          | x
+    -----
+
+    err1 = CUDA_ERROR_COOPERATIVE_LAUNCH_TOO_LARGE
+    err2 = CUDA_ERROR_INVALID_VALUE
+    warn1 = NumbaPerformanceWarning
+
+    Config. constrains:
+    - cubic lattice: Lx = Ly = Lz;
+    - tile linear size >= 4;
+    - block size is multiple of 32;
+    - at least 64 threads/block;
+    - reasonable range is 128–256 threads/block;
+
+    Legend:
+    - Tb = tot. num of threads per block
+    - T = tot. num. of threads
+    - L = L_x, L_y, L_z = linear size
+    - N = tot. num. of particles
+    - tpb = threads_per_block
+    - b = blocks
+    
+    NOTE: tiles fixed at (4, 4, 4)
+
+     config | threads_per_block | blocks    | Tb  | T      | L   | N 
+    -------------------------------------------------------------------------
+     A      | (8, 4, 4)         | (4, 8, 8) | 128 | 32,768 | 128 | 2,097,152
+
+     B      | (4, 4, 4)         | (8, 8, 8) | //  | //     | //  | //
+
+     C      | (8, 8, 4)         | (4, 4, 8) | //  | //     | //  | //
+
+     D      | (16, 4, 4)        | (2, 8, 8) | //  | 16,384 | //  | //
+
+     E      | (8, 8, 8)         | (4, 4, 4) | 512 | 32,768 | 128 | 2,097,152
+    -------------------------------------------------------------------------
+
+     config | time (min) | mc attemps per sec (mil)
+    -----------------------------------------------
+    - A     | 160        | 768
+    - B     | 160        | 777
+    - C     | 352        | 287
+    - D     | 347        | 289
+    - E     | 354        | 293
+
+    Best performance: B 
+    So from now on we fix threads_per_block = (4, 4, 4) and test:
+
+    - L96: blocks = (6, 6, 6) --> N = 884,736;
+    - L64: blocks = (4, 4, 4) --> N = 262,144;
+    - L48: blocks = (3, 3, 3) --> N = 110,592;
+

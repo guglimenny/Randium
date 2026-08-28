@@ -1,0 +1,109 @@
+[13/08/26 - 11:00]
+
+Small notebook of my work on the Randium code (randium_original) 'expansion', 
+i.e. modifications done in order to:
+- [✔️] expand the neighbours list;
+- [✔️] generalise lattice geometry;
+- [ ] implement 3D cubic lattice;
+
+TO DO:
+- [✔️] print coordination_num in logs.
+- [] print lattice_type in logs.
+- move neighbour arrays ints to 16 bits
+- [randium_2d_gpu] Potentially remove set_lattice(): not used.
+- [randium_2d_gpu] Add lattice type to meta_info().
+
+GENERAL NOTES:
+- WARNING: for the first steps of the expansion there displacement computation
+    won't be adapted to the new kind of lattices - do not trust them.
+
+MODIFICATION HISTORY:
+1. [backend] Implemented 'king' lattice neighbours list and a neighbours list
+    dictionary for easy selection.
+    Same for 'knight' lattice.
+
+2. [randium_2d_gpu] Added the coordination number 'self.z' to meta_info_simple(), 
+    meta_info() dictionary output.
+
+========== All and the above is my 'v1' ==========
+
+3. [backed] Introduced 'lattice_type' string for the selection of the kind of lattice.
+    Introduced 'move_list' to distinguish between the relative interaction sites (i.e.,
+    with whom the particle interacts) with respect to the relative move sites (i.e., 
+    where the particle will land).
+    This regards:
+    - h_get_particle_energy(), d_get_particle_energy(): use neighbours list for interaction;
+    - run_cpu(), d_update(): uses move_list to see where the particle may 'land'.
+
+    Now, if the selected 'lattice' has movements over multiple sites its the interaction 
+    remains with nearest neighbours.
+    [backend] Removed the NEIGHBOR_LIST_DICT dictionary and implemented LATTICE_LIST_DICT
+    to have a coherent selection of neighbour and move lists. 
+    NOTE: multi-site moved (e.g., knight and queen) use the 'square' lattice interaction
+    pattern.
+
+========== All and the above is my 'v2' ==========
+
+4. NOTE: removed knight and queen lattice type to simply honeycomb implementation.
+
+5. Implementation of a 'find right neighbour' function in order to select the right neighbour
+    list depending on the site; this will be useful for the honeycomb lattice.
+    Function name: get_neighbor_positions().
+
+    Idea: since non-Bravais lattices have different nearest neighbour orientations
+    the neighbour tuples are now made of 2 tuples, depending on the site 'parity' 
+    (parity is computed as, given i and j as lattice site indeces, (i + j) % 2).
+    For Bravais lattices (e.g., square) the tuple are identical.
+    For non-Bravais lattices (e.g., hexagonal) the tuple differ.
+
+    This is propagated to:
+    - h_get_particle_energy(), d_get_particle_energy(): change the loop over 
+        nearest neighbours;
+    - run_cpu(), d_update(): compute dx, dy via get_neighbor_positions
+
+    Introduced:
+    - h_get_neighbor_list(), 
+    - d_get_neighbor_list(),
+
+6. Bug fixes:
+    - ficed neighbor lists where (0, 1) was repeated 2 times;
+    - moved nested tuples neighbor lists to numpy array (dtype=np.int32);
+    - changed coordination number computation to z = neighbor_list.shape[1];
+    - run_cpu() d_update(), changed dx, dy computation both for CPU and GPU;
+
+7. Bug fixes (round 2):
+    - removed get_neighbor_list_core() and moved its implementation 
+        to get_neighbor_displacement_core();
+    - h_get_particle_energy(): changed loop over neighbor_list --> loops over
+        neighbours index (for k in range(z)...);
+    - To make cuda happy, introduced:
+        > d_neighbor_list = cuda.to_device(neighbor_list)
+        in [backend] main().
+        Then added 'neighbor' to input param of get_neighbor_displacements_core().
+        This was propagated to:
+        
+        [backend]
+        - [✔️] h_get_neighbor_displacements(): uses gloabl neighbor_list;
+        - [✔️] d_get_neighbor_displacements(): passes neighbors as neighbours array:
+        * [✔️] d_get_particle_energy();
+        ** [✔️] d_update_particle_type_swap();
+        *** [✔️] kernel_run_type_swaps();
+        **** [✔️] main();
+        * [✔️] d_update();
+        ** [✔️] kernel_run_simulation();
+
+        [randium_2d_gpu]
+        - [✔️] __init__(): added self.neighbor_list and self.d_neighbor_list;
+        - [✔️] run(): added self.d_neighbor_list to backend.kernel_run_simulation call;
+        - [✔️] run_type_swaps(): added self.d_neighbor_list to backend.kernel_run_simulation call;
+
+8. Bug fixes (round 3):
+    [backend]
+    - [✔️] d_update(): d_get_neighbor_displacements call use neighbor_list instead
+        of neighbors passed as input param;
+    [randium_2d_gpu]
+    - [✔️] get_mean_square_displacement(): change msd computation to
+        > return np.sum(self.displacements**2) / self.N;
+
+========== All and the above is my 'v3' ==========
+
